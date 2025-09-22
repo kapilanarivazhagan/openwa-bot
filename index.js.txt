@@ -1,0 +1,27 @@
+const wa = require('@open-wa/wa-automate');
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+const PORT = 8080;
+const API_KEY = process.env.OPENWA_KEY;
+
+wa.create({
+    sessionId: 'reports',
+    headless: true,
+    qrTimeout: 0,
+    authTimeout: 60,
+    useChrome: true,
+    disableSpins: true,
+}).then(client => {
+    console.log('✅ OpenWA running');
+
+    app.post('/sendImage', async (req, res) => {
+        if (req.headers['x-api-key'] !== API_KEY) return res.status(401).send('Unauthorized');
+        const { chatId, image, caption } = req.body;
+        await client.sendImage(chatId, image, 'report.png', caption);
+        res.send('✅ Sent!');
+    });
+
+    app.listen(PORT, () => console.log(`API running on port ${PORT}`));
+});
